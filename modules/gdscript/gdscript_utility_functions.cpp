@@ -30,6 +30,8 @@
 
 #include "gdscript_utility_functions.h"
 
+#include "core/os/time.h"
+#include "core/string/print_string.h"
 #include "gdscript.h"
 
 #include "core/io/resource_loader.h"
@@ -434,6 +436,92 @@ struct GDScriptUtilityFunctionsDefinitions {
 		*r_ret = Variant();
 	}
 
+	static inline void sk_print_log(String s) {
+		String t = "[color=gray]" + Time::get_singleton()->get_datetime_string_from_system() + "[/color]:";
+		print_line_rich(t, s);
+	}
+
+	static inline void error(Variant *r_ret, const Variant **p_args, int p_arg_count, Callable::CallError &r_error) {
+		if (p_arg_count < 2) {
+			sk_print_log("[color=red]Called info() function with less than 2 arguments[/color]");
+			return;
+		}
+		String cat;
+		cat = p_args[0]->operator String();
+		String s = "[color=red][ERROR][/color] Log" + cat + ": ";
+		for (int i = 1; i < p_arg_count; i++) {
+			s += p_args[i]->operator String();
+		}
+
+		sk_print_log(s);
+	}
+
+	static inline void warn(Variant *r_ret, const Variant **p_args, int p_arg_count, Callable::CallError &r_error) {
+		if (p_arg_count < 2) {
+			sk_print_log("[color=red]Called info() function with less than 2 arguments[/color]");
+			return;
+		}
+		String cat;
+		cat = p_args[0]->operator String();
+		String s = "[color=yellow][WARN][/color] Log" + cat + ": ";
+		for (int i = 1; i < p_arg_count; i++) {
+			s += p_args[i]->operator String();
+		}
+
+		sk_print_log(s);
+	}
+
+	static inline void info(Variant *r_ret, const Variant **p_args, int p_arg_count, Callable::CallError &r_error) {
+		if (p_arg_count < 2) {
+			sk_print_log("[color=red]Called info() function with less than 2 arguments[/color]");
+			return;
+		}
+		String cat;
+		cat = p_args[0]->operator String();
+		String s = "[color=green][INFO][/color] Log" + cat + ": ";
+		for (int i = 1; i < p_arg_count; i++) {
+			s += p_args[i]->operator String();
+		}
+
+		sk_print_log(s);
+	}
+
+	static inline void debug(Variant *r_ret, const Variant **p_args, int p_arg_count, Callable::CallError &r_error) {
+		if (p_arg_count < 2) {
+			sk_print_log("[color=red]Called debug() function with less than 2 arguments[/color]");
+			return;
+		}
+		String cat;
+		cat = p_args[0]->operator String();
+		String s = "[color=white][DEBUG][/color] Log" + cat + ": ";
+		for (int i = 1; i < p_arg_count; i++) {
+			s += p_args[i]->operator String();
+		}
+
+		sk_print_log(s);
+	}
+
+	static inline void trace(Variant *r_ret, const Variant **p_args, int p_arg_count, Callable::CallError &r_error) {
+		if (p_arg_count < 2) {
+			sk_print_log("[color=red]Called debug() function with less than 2 arguments[/color]");
+			return;
+		}
+		String cat = p_args[0]->operator String();
+		String s = "[color=gray][TRACE] ";
+		if (Thread::get_caller_id() == Thread::get_main_id()) {
+			ScriptLanguage *script = GDScriptLanguage::get_singleton();
+			s += script->debug_get_stack_level_source(0) + ":";
+			s += script->debug_get_stack_level_function(0) + "(";
+			s += itos(script->debug_get_stack_level_line(0)) + ") Log" + cat + ": ";
+		}
+		s += "[/color] ";
+		for (int i = 1; i < p_arg_count; i++) {
+			s += p_args[i]->operator String();
+		}
+
+		sk_print_log(s);
+	}
+
 	static inline void print_stack(Variant *r_ret, const Variant **p_args, int p_arg_count, Callable::CallError &r_error) {
 		VALIDATE_ARG_COUNT(0);
 		if (Thread::get_caller_id() != Thread::get_main_id()) {
@@ -448,7 +536,8 @@ struct GDScriptUtilityFunctionsDefinitions {
 		*r_ret = Variant();
 	}
 
-	static inline void get_stack(Variant *r_ret, const Variant **p_args, int p_arg_count, Callable::CallError &r_error) {
+	static inline void
+	get_stack(Variant *r_ret, const Variant **p_args, int p_arg_count, Callable::CallError &r_error) {
 		VALIDATE_ARG_COUNT(0);
 		if (Thread::get_caller_id() != Thread::get_main_id()) {
 			*r_ret = TypedArray<Dictionary>();
@@ -716,6 +805,11 @@ void GDScriptUtilityFunctions::register_functions() {
 	REGISTER_FUNC(dict_to_inst, false, Variant::OBJECT, ARG("dictionary", Variant::DICTIONARY));
 	REGISTER_FUNC_DEF(Color8, true, 255, Variant::COLOR, ARG("r8", Variant::INT), ARG("g8", Variant::INT), ARG("b8", Variant::INT), ARG("a8", Variant::INT));
 	REGISTER_VARARG_FUNC(print_debug, false, Variant::NIL);
+	REGISTER_VARARG_FUNC(trace, false, Variant::NIL);
+	REGISTER_VARARG_FUNC(debug, false, Variant::NIL);
+	REGISTER_VARARG_FUNC(info, false, Variant::NIL);
+	REGISTER_VARARG_FUNC(warn, false, Variant::NIL);
+	REGISTER_VARARG_FUNC(error, false, Variant::NIL);
 	REGISTER_FUNC_NO_ARGS(print_stack, false, Variant::NIL);
 	REGISTER_FUNC_NO_ARGS(get_stack, false, Variant::ARRAY);
 	REGISTER_FUNC(len, true, Variant::INT, VARARG("var"));
